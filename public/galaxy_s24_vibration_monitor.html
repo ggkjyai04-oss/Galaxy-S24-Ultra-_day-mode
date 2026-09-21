@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Galaxy S24 Ultra 진동 이상 징후 감지 및 실시간 알림 시스템 (단일 실행 파일)</title>
+  <meta name="description" content="갤럭시 S24 울트라 가속도/모션 센서 기반 실시간 진동 분석, 이상 징후 감지 및 즉각 경보 모니터링 시스템 (단일 HTML)" />
+  <style>
+    :root {
+      --bg-main: #030712;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #1e293b;
+      --border-accent: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.25);
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --indigo: #6366f1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    code, pre, .mono {
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+
+    /* Layout Containers */
+    .header {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .main-container {
+      flex: 1;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    .card-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    /* Metric Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .metric-value {
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .metric-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .badge-cyan {
+      background: rgba(6, 182, 212, 0.12);
+      border-color: rgba(6, 182, 212, 0.3);
+      color: var(--cyan);
+    }
+    .badge-emerald {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: var(--emerald);
+    }
+    .badge-amber {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: var(--amber);
+    }
+    .badge-rose {
+      background: rgba(244, 63, 94, 0.12);
+      border-color: rgba(244, 63, 94, 0.3);
+      color: var(--rose);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      outline: none;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: #0891b2;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #06b6d4;
+    }
+    .btn-secondary {
+      background: #1e293b;
+      color: #cbd5e1;
+      border-color: #334155;
+    }
+    .btn-secondary:hover {
+      background: #334155;
+      color: #fff;
+    }
+    .btn-danger {
+      background: #be123c;
+      color: #fff;
+    }
+    .btn-danger:hover {
+      background: #e11d48;
+    }
+    .btn-warning {
+      background: #d97706;
+      color: #fff;
+    }
+    .btn-warning:hover {
+      background: #f59e0b;
+    }
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 0.775rem;
+    }
+
+    /* Grid Layouts */
+    .two-col-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 1024px) {
+      .two-col-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Canvas Containers */
+    .canvas-box {
+      width: 100%;
+      height: 280px;
+      background: #030712;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Active Alarm Bar */
+    .alarm-banner {
+      display: none;
+      background: linear-gradient(90deg, rgba(225, 29, 72, 0.95), rgba(159, 18, 57, 0.95));
+      border: 1px solid #f43f5e;
+      border-radius: 10px;
+      padding: 12px 18px;
+      margin-bottom: 8px;
+      align-items: center;
+      justify-content: space-between;
+      animation: pulseAlert 1.2s infinite alternate ease-in-out;
+    }
+    @keyframes pulseAlert {
+      0% { box-shadow: 0 0 10px rgba(244, 63, 94, 0.4); }
+      100% { box-shadow: 0 0 25px rgba(244, 63, 94, 0.9); }
+    }
+
+    /* Table */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      max-height: 280px;
+      border-radius: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      text-align: left;
+    }
+    th {
+      background: #1e293b;
+      color: #94a3b8;
+      padding: 10px 12px;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #1e293b;
+      color: #cbd5e1;
+    }
+    tr:hover td {
+      background: rgba(30, 41, 59, 0.5);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-dialog {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      max-width: 650px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+      position: relative;
+    }
+
+    /* Sensor Node View (Mobile Probe Mode) */
+    #sensorNodeView {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 32px 16px;
+      gap: 20px;
+      min-height: 80vh;
+    }
+    .probe-gauge {
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      border: 4px solid #06b6d4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, rgba(6,182,212,0.15) 0%, rgba(15,23,42,0.8) 70%);
+      box-shadow: 0 0 35px rgba(6, 182, 212, 0.3);
+      position: relative;
+    }
+    .probe-gauge.warning {
+      border-color: #f59e0b;
+      box-shadow: 0 0 35px rgba(245, 158, 11, 0.4);
+    }
+    .probe-gauge.critical {
+      border-color: #f43f5e;
+      box-shadow: 0 0 45px rgba(244, 63, 94, 0.6);
+      animation: pulseAlert 0.8s infinite alternate;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="header">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #0891b2, #3b82f6); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <div>
+        <div style="font-weight: 700; font-size: 1.05rem; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px;">
+          Galaxy S24 Ultra 진동 이상 감지기
+          <span class="badge badge-cyan">단일 HTML 포터블</span>
+        </div>
+        <div style="font-size: 0.725rem; color: var(--text-muted);">실시간 3축 고정밀 MEMS 가속도계 센서 분석 &amp; 즉각 경보 엔진</div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <!-- Sensor Mode Toggle Button -->
+      <button id="btnToggleSensorView" class="btn btn-secondary btn-sm" onclick="toggleSensorProbeMode()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+        <span>스마트폰 센서 모드</span>
+      </button>
+
+      <!-- Audio Mute Toggle -->
+      <button id="btnToggleMute" class="btn btn-secondary btn-sm" onclick="toggleMute()">
+        <span id="muteIcon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        </span>
+        <span id="muteText">알람 사운드 켜짐</span>
+      </button>
+
+      <!-- Inject Shock Spike -->
+      <button class="btn btn-danger btn-sm" onclick="injectSpikeShock()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span>충격 스파이크 인젝션</span>
+      </button>
+
+      <!-- Gemini AI Diagnosis -->
+      <button class="btn btn-primary btn-sm" onclick="openAiDiagnosisModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4"/><path d="M12 18v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="m16.24 16.24 2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="m16.24 7.76 2.83-2.83"/></svg>
+        <span>AI 정밀 진단</span>
+      </button>
+
+      <!-- Download HTML button -->
+      <button class="btn btn-secondary btn-sm" onclick="downloadCurrentHtml()" title="현재 단일 HTML 파일 로컬 저장">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>HTML 다운로드</span>
+      </button>
+
+      <!-- Settings Button -->
+      <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Active Critical Alarm Banner (Shows when anomaly occurs) -->
+  <div id="alarmBanner" class="alarm-banner main-container" style="margin-top: 12px; margin-bottom: 0;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <div>
+        <div style="font-weight: 700; font-size: 1rem; letter-spacing: -0.01em;" id="alarmBannerTitle">긴급 진동 이상 경보 감지</div>
+        <div style="font-size: 0.8rem; opacity: 0.9;" id="alarmBannerDesc">최대 진동 가속도 및 RMS 임계치 초과 발생</div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button class="btn btn-secondary btn-sm" onclick="openAiDiagnosisModal()">AI 원인 진단</button>
+      <button class="btn btn-secondary btn-sm" onclick="dismissAlarm()">경보 해제 (Acknowledge)</button>
+    </div>
+  </div>
+
+  <!-- Primary Dashboard Container -->
+  <div id="dashboardView" class="main-container">
+    
+    <!-- Simulation Scenario Selector & Hardware Status -->
+    <div class="card" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-weight: 600; font-size: 0.875rem; color: var(--text-muted);">시뮬레이션 가동 시나리오:</span>
+        <select id="scenarioSelect" onchange="changeScenario(this.value)" style="background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 6px; padding: 6px 12px; font-size: 0.85rem; outline: none; cursor: pointer;">
+          <option value="NORMAL_STABLE">1. 정상 안정 가동 (Normal Stable MEMS Noise)</option>
+          <option value="MOTOR_IMBALANCE">2. 모터 회전체 불평형 (Motor Unbalance 30Hz 1X)</option>
+          <option value="BEARING_FAULT">3. 베어링 볼 레이스 결함 (Bearing Fault BPFO Impulses)</option>
+          <option value="SEISMIC_TREMOR">4. 지진/저주파 구조 진동 (Seismic Low-Freq Tremor)</option>
+          <option value="CAVITATION">5. 펌프 캐비테이션/배관 난류 (Cavitation Turbulence)</option>
+          <option value="RESONANCE_SWEEP">6. 공진 주파수 스윕 (Resonance Frequency Sweep)</option>
+        </select>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 14px; font-size: 0.8rem;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+          <span style="color: var(--text-muted);">센서 샘플링:</span>
+          <span class="mono" style="font-weight: 600;" id="txtSampleRate">60 Hz</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="color: var(--text-muted);">중력 보정:</span>
+          <span class="badge badge-cyan" style="padding: 2px 6px;">동적 AC 분리 가동</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="color: var(--text-muted);">하드웨어:</span>
+          <span style="color: #cbd5e1; font-weight: 500;">Samsung Galaxy S24 Ultra</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Telemetry KPI Metrics -->
+    <div class="metrics-grid">
+      <!-- RMS Card -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          실효 가속도 (RMS)
+        </div>
+        <div class="metric-value mono" id="valRms" style="color: var(--cyan);">0.24 <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">m/s²</span></div>
+        <div class="metric-sub" id="subRms">경고 기준: 2.80 m/s² | 위험: 5.50 m/s²</div>
+      </div>
+
+      <!-- Peak Acceleration Card -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          최대 첨두치 (Peak)
+        </div>
+        <div class="metric-value mono" id="valPeak" style="color: #cbd5e1;">0.38 <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">m/s²</span></div>
+        <div class="metric-sub">Peak-to-Peak: <span class="mono" id="valPkPk">0.76</span> m/s²</div>
+      </div>
+
+      <!-- Dominant Frequency Card -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+          주 진동 주파수 (1X)
+        </div>
+        <div class="metric-value mono" id="valFreq" style="color: #a78bfa;">12.0 <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">Hz</span></div>
+        <div class="metric-sub">환산 회전수: 약 <span class="mono" id="valRpm">720</span> RPM</div>
+      </div>
+
+      <!-- Kurtosis Card -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          첨도 지수 (Kurtosis)
+        </div>
+        <div class="metric-value mono" id="valKurtosis" style="color: #38bdf8;">3.02</div>
+        <div class="metric-sub">정상 가우스 기준: 3.0 (충격 시 급증)</div>
+      </div>
+
+      <!-- ISO 10816 Severity Status -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+          ISO 10816-3 판정
+        </div>
+        <div style="margin-top: 6px;">
+          <span id="badgeIsoClass" class="badge badge-emerald" style="font-size: 0.95rem; padding: 6px 14px;">Zone A (Class I 정상)</span>
+        </div>
+        <div class="metric-sub" id="descIso" style="margin-top: 8px;">정상 가동: 신규/정비 직후 우수 상태</div>
+      </div>
+    </div>
+
+    <!-- Visualizers (Oscilloscope Waveform & Spectral FFT) -->
+    <div class="two-col-grid">
+      <!-- Oscilloscope Canvas -->
+      <div class="card">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+          <div class="card-title" style="margin-bottom: 0;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            실시간 3축 고속 오실로스코프 파형
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 0.75rem;">
+            <span style="color: #ef4444; font-weight: 600;">● X축</span>
+            <span style="color: #10b981; font-weight: 600;">● Y축</span>
+            <span style="color: #3b82f6; font-weight: 600;">● Z축</span>
+            <span style="color: #06b6d4; font-weight: 700;">■ 합성 진폭</span>
+          </div>
+        </div>
+        <div class="canvas-box">
+          <canvas id="oscCanvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Spectral View Canvas -->
+      <div class="card">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+          <div class="card-title" style="margin-bottom: 0;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 17v-4"/><path d="M12 17v-8"/><path d="M17 17v-6"/></svg>
+            진동 주파수 스펙트럼 (FFT 분석기)
+          </div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">
+            범위: 0 ~ 50 Hz | 해상도: 0.9 Hz
+          </div>
+        </div>
+        <div class="canvas-box">
+          <canvas id="specCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Anomaly History Log Table -->
+    <div class="card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+        <div class="card-title" style="margin-bottom: 0;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          이상 징후 발생 이력 및 즉각 경보 로그
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button class="btn btn-secondary btn-sm" onclick="clearAnomalyLogs()">이력 비우기</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportLogsCsv()">CSV 내보내기</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>시각</th>
+              <th>위험 등급</th>
+              <th>이상 유형</th>
+              <th>최대 가속도</th>
+              <th>RMS 진동</th>
+              <th>주 주파수</th>
+              <th>상태 / 조치</th>
+            </tr>
+          </thead>
+          <tbody id="anomalyTableBody">
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                현재 감지된 진동 이상 징후가 없습니다. 정상 운전 중입니다.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Mobile Sensor Probe Mode (Allows using this phone as an active wireless vibration sensor node) -->
+  <div id="sensorNodeView" class="main-container">
+    <div style="max-width: 500px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+      
+      <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+        <button class="btn btn-secondary btn-sm" onclick="toggleSensorProbeMode()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+          대시보드로 복귀
+        </button>
+        <span class="badge badge-cyan">Galaxy S24 Ultra 하드웨어 센서 프로브</span>
+      </div>
+
+      <div style="font-size: 1.25rem; font-weight: 700;">스마트폰 진동 측정 프로브 모드</div>
+      <div style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.6;">
+        갤럭시 스마트폰을 측정 대상 설비(모터, 베어링 하우징, 펌프 등) 위에 안정적으로 고정하십시오.
+        내장 3축 MEMS 가속도계가 고정밀 진동 파형을 실시간 취득합니다.
+      </div>
+
+      <!-- Live Dynamic Magnitude Circle Gauge -->
+      <div id="probeGauge" class="probe-gauge">
+        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">동적 진동 진폭</div>
+        <div class="mono" id="probeMagText" style="font-size: 2.8rem; font-weight: 800; color: #fff;">0.00</div>
+        <div style="font-size: 0.85rem; color: var(--cyan); font-weight: 600;">m/s² (RMS)</div>
+      </div>
+
+      <!-- Real Hardware Axis Readings -->
+      <div style="display: flex; gap: 12px; width: 100%; justify-content: center;">
+        <div class="card" style="padding: 10px 16px; text-align: center; flex: 1;">
+          <div style="font-size: 0.75rem; color: #ef4444; font-weight: 600;">X축 (수평)</div>
+          <div class="mono" id="probeAxisX" style="font-weight: 700; font-size: 1.1rem;">0.00</div>
+        </div>
+        <div class="card" style="padding: 10px 16px; text-align: center; flex: 1;">
+          <div style="font-size: 0.75rem; color: #10b981; font-weight: 600;">Y축 (수평)</div>
+          <div class="mono" id="probeAxisY" style="font-weight: 700; font-size: 1.1rem;">0.00</div>
+        </div>
+        <div class="card" style="padding: 10px 16px; text-align: center; flex: 1;">
+          <div style="font-size: 0.75rem; color: #3b82f6; font-weight: 600;">Z축 (수직)</div>
+          <div class="mono" id="probeAxisZ" style="font-weight: 700; font-size: 1.1rem;">0.00</div>
+        </div>
+      </div>
+
+      <!-- Sensor Activation Buttons -->
+      <div style="display: flex; gap: 12px; width: 100%;">
+        <button id="btnStartSensor" class="btn btn-primary" style="flex: 1; padding: 14px;" onclick="startRealSensorStream()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          스마트폰 센서 측정 시작
+        </button>
+        <button id="btnStopSensor" class="btn btn-secondary" style="flex: 1; padding: 14px; display: none;" onclick="stopRealSensorStream()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></svg>
+          측정 중지
+        </button>
+      </div>
+
+      <div style="font-size: 0.775rem; color: var(--text-muted);">
+        * Android Chrome / Samsung Internet에서는 버튼 클릭 즉시 가속도계 센서가 연동됩니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Diagnosis Modal -->
+  <div id="aiModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <div style="font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M12 2v4"/><path d="M12 18v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="m16.24 16.24 2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="m16.24 7.76 2.83-2.83"/></svg>
+          진동 이상 징후 엔지니어링 AI 정밀 진단
+        </div>
+        <button onclick="closeAiModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;">&times;</button>
+      </div>
+
+      <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+        현재 측정된 3축 가속도 실효치(RMS), 주파수 스펙트럼 피크, 첨도(Kurtosis) 데이터를 분석하여 결함 유형을 판정합니다.
+      </div>
+
+      <!-- Diagnosis Report Container -->
+      <div id="aiReportCard" class="card" style="background: #030712; margin-bottom: 16px; border-color: #334155;">
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 12px;">
+          <div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">추정 결함 유형</div>
+            <div id="aiFaultType" style="font-size: 1.15rem; font-weight: 700; color: #f59e0b;">회전체 불평형 및 편심 하중 (Motor Imbalance)</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 0.75rem; color: var(--text-muted);">ISO 10816-3 상태</div>
+            <div id="aiIsoRating" class="badge badge-amber">Zone C (주의 요망)</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">분석 리포트 요약</div>
+          <div id="aiSummary" style="font-size: 0.9rem; line-height: 1.6; color: #e2e8f0;">
+            1X 회전 주파수(30.0 Hz) 대역에서 강한 동적 진폭이 검출되었으며, 실효 가속도(RMS)가 정상치 대비 3.2배 높습니다.
+          </div>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">구체적 공학적 해석</div>
+          <div id="aiDetails" style="font-size: 0.85rem; line-height: 1.6; color: #94a3b8;">
+            회전축의 질량 중심이 기하학적 중심축과 일치하지 않아 원심력이 주기적으로 하우징에 전달되고 있습니다. 충격 첨도(Kurtosis)는 3.1로 베어링 파손 징후는 아니며 전형적인 언밸런스 진동 특성을 보입니다.
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px;">권장 정비 및 대응 수칙</div>
+          <ul id="aiRecs" style="padding-left: 20px; font-size: 0.85rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 4px;">
+            <li>회전체 날개 및 커플링 부위의 이물질 부착 여부를 육안 점검하십시오.</li>
+            <li>정적/동적 밸런싱(Field Balancing) 측정을 실시하여 밸런스 웨이트를 보정하십시오.</li>
+            <li>고정 볼트(Foundation Bolts)의 풀림이나 체결 토크 미달 상태를 확인하십시오.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-secondary btn-sm" onclick="runAiDiagnosis()">새로 고침 (재진단)</button>
+        <button class="btn btn-primary btn-sm" onclick="closeAiModal()">확인 완료</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 500px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <div style="font-size: 1.15rem; font-weight: 700;">임계치 및 센서 모니터링 설정</div>
+        <button onclick="closeSettingsModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;">&times;</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px; font-size: 0.875rem;">
+        <div>
+          <label style="display: block; margin-bottom: 4px; color: #cbd5e1;">RMS 경고(Warning) 임계치 (m/s²)</label>
+          <input id="cfgRmsWarn" type="number" step="0.1" value="2.8" style="width: 100%; background: #1e293b; border: 1px solid #334155; color: #fff; padding: 8px; border-radius: 6px;" />
+        </div>
+        <div>
+          <label style="display: block; margin-bottom: 4px; color: #cbd5e1;">RMS 위험(Critical) 임계치 (m/s²)</label>
+          <input id="cfgRmsCrit" type="number" step="0.1" value="5.5" style="width: 100%; background: #1e293b; border: 1px solid #334155; color: #fff; padding: 8px; border-radius: 6px;" />
+        </div>
+        <div>
+          <label style="display: block; margin-bottom: 4px; color: #cbd5e1;">최대 첨두치(Peak) 임계치 (m/s²)</label>
+          <input id="cfgPeakCrit" type="number" step="0.5" value="14.0" style="width: 100%; background: #1e293b; border: 1px solid #334155; color: #fff; padding: 8px; border-radius: 6px;" />
+        </div>
+        <div>
+          <label style="display: block; margin-bottom: 4px; color: #cbd5e1;">충격 첨도(Kurtosis) 임계치</label>
+          <input id="cfgKurtosis" type="number" step="0.1" value="4.5" style="width: 100%; background: #1e293b; border: 1px solid #334155; color: #fff; padding: 8px; border-radius: 6px;" />
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+          <input id="cfgSound" type="checkbox" checked style="width: 16px; height: 16px;" />
+          <label for="cfgSound" style="color: #cbd5e1;">이상 감지 시 Web Audio 합성 사이렌 자동 출력</label>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+        <button class="btn btn-secondary btn-sm" onclick="closeSettingsModal()">취소</button>
+        <button class="btn btn-primary btn-sm" onclick="saveSettings()">설정 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Standalone Application Script (Zero External Dependencies) -->
+  <script>
+    // ==========================================
+    // 1. Core State & Configuration
+    // ==========================================
+    const state = {
+      isMuted: false,
+      scenario: 'NORMAL_STABLE',
+      sampleRate: 60,
+      samples: [],
+      anomalies: [],
+      activeAnomaly: null,
+      spikeMagnitude: 0,
+      phase: 0,
+      isRealSensorStreaming: false,
+      thresholds: {
+        rmsWarn: 2.8,
+        rmsCrit: 5.5,
+        peakCrit: 14.0,
+        kurtosisCrit: 4.5,
+        soundEnabled: true
+      }
+    };
+
+    // Vector gravity removal filter
+    class DynamicVibrationExtractor {
+      constructor() {
+        this.gravX = 0;
+        this.gravY = 0;
+        this.gravZ = 9.80665;
+        this.alpha = 0.95;
+      }
+      process(x, y, z) {
+        this.gravX = this.alpha * this.gravX + (1 - this.alpha) * x;
+        this.gravY = this.alpha * this.gravY + (1 - this.alpha) * y;
+        this.gravZ = this.alpha * this.gravZ + (1 - this.alpha) * z;
+        const dx = x - this.gravX;
+        const dy = y - this.gravY;
+        const dz = z - this.gravZ;
+        const mag = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        return { dx, dy, dz, mag };
+      }
+    }
+    const extractor = new DynamicVibrationExtractor();
+
+    // ==========================================
+    // 2. Web Audio Synthesizer (Instant Alarm Sound)
+    // ==========================================
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+      }
+      init() {
+        if (!this.ctx && (window.AudioContext || window.webkitAudioContext)) {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      playWarning() {
+        if (state.isMuted || !state.thresholds.soundEnabled) return;
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, now);
+          osc.frequency.exponentialRampToValueAtTime(1174, now + 0.15);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        } catch (e) { console.warn(e); }
+      }
+      playCritical() {
+        if (state.isMuted || !state.thresholds.soundEnabled) return;
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const lfo = this.ctx.createOscillator();
+          const lfoGain = this.ctx.createGain();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(850, now);
+          lfo.type = 'sine';
+          lfo.frequency.setValueAtTime(4, now);
+          lfoGain.gain.setValueAtTime(320, now);
+
+          lfo.connect(lfoGain);
+          lfoGain.connect(osc.frequency);
+
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          lfo.start(now);
+          osc.stop(now + 1.2);
+          lfo.stop(now + 1.2);
+        } catch (e) { console.warn(e); }
+      }
+      triggerHaptic(severity) {
+        if (navigator.vibrate) {
+          try {
+            if (severity === 'CRITICAL') navigator.vibrate([200, 80, 200, 80, 400]);
+            else navigator.vibrate([150, 100, 150]);
+          } catch(e) {}
+        }
+      }
+    }
+    const soundEngine = new SoundEngine();
+
+    // ==========================================
+    // 3. Mathematical Utilities (FFT, Kurtosis, ISO)
+    // ==========================================
+    function calculateKurtosis(values) {
+      if (values.length < 4) return 3.0;
+      let sum = 0;
+      for (let v of values) sum += v;
+      const mean = sum / values.length;
+      let varSum = 0, fSum = 0;
+      for (let v of values) {
+        const d = v - mean;
+        const d2 = d * d;
+        varSum += d2;
+        fSum += d2 * d2;
+      }
+      const variance = varSum / values.length;
+      if (variance < 1e-6) return 3.0;
+      return (fSum / values.length) / (variance * variance);
+    }
+
+    function evaluateIso(rms) {
+      if (rms < 1.1) return { text: 'Zone A (Class I 정상)', color: 'badge-emerald', desc: '정상 가동: 신규/정비 직후 우수 상태' };
+      if (rms < 2.8) return { text: 'Zone B (Class II 허용)', color: 'badge-cyan', desc: '장기 연속 운전이 가능한 안정적 상태' };
+      if (rms < 7.1) return { text: 'Zone C (Class III 주의)', color: 'badge-amber', desc: '단기 운전만 허용, 원인 분석 및 예방 점검 요망' };
+      return { text: 'Zone D (Class IV 위험)', color: 'badge-rose', desc: '설비 손상 위험, 즉시 긴급 정지 및 점검 조치 요망' };
+    }
+
+    // ==========================================
+    // 4. Oscilloscope Canvas Renderer
+    // ==========================================
+    const oscCanvas = document.getElementById('oscCanvas');
+    const oscCtx = oscCanvas.getContext('2d');
+
+    function resizeCanvas() {
+      const parentW = oscCanvas.parentElement.clientWidth;
+      const parentH = oscCanvas.parentElement.clientHeight;
+      if (oscCanvas.width !== parentW) oscCanvas.width = parentW;
+      if (oscCanvas.height !== parentH) oscCanvas.height = parentH;
+
+      const specCanvas = document.getElementById('specCanvas');
+      if (specCanvas.width !== parentW) specCanvas.width = parentW;
+      if (specCanvas.height !== parentH) specCanvas.height = parentH;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function renderOscilloscope() {
+      const w = oscCanvas.width;
+      const h = oscCanvas.height;
+      oscCtx.clearRect(0, 0, w, h);
+
+      // Draw Grid
+      oscCtx.strokeStyle = '#1e293b';
+      oscCtx.lineWidth = 1;
+      const gridSteps = 6;
+      for (let i = 1; i < gridSteps; i++) {
+        const y = (h / gridSteps) * i;
+        oscCtx.beginPath();
+        oscCtx.moveTo(0, y);
+        oscCtx.lineTo(w, y);
+        oscCtx.stroke();
+      }
+      for (let i = 1; i < 10; i++) {
+        const x = (w / 10) * i;
+        oscCtx.beginPath();
+        oscCtx.moveTo(x, 0);
+        oscCtx.lineTo(x, h);
+        oscCtx.stroke();
+      }
+
+      // Center baseline
+      const centerY = h / 2;
+      oscCtx.strokeStyle = '#334155';
+      oscCtx.lineWidth = 1.5;
+      oscCtx.beginPath();
+      oscCtx.moveTo(0, centerY);
+      oscCtx.lineTo(w, centerY);
+      oscCtx.stroke();
+
+      const count = state.samples.length;
+      if (count < 2) return;
+
+      const scaleY = (h / 2) / 12.0; // scale: 12 m/s² spans half screen
+
+      // Render X (Red), Y (Green), Z (Blue)
+      const renderLine = (key, color, width = 1) => {
+        oscCtx.strokeStyle = color;
+        oscCtx.lineWidth = width;
+        oscCtx.beginPath();
+        for (let i = 0; i < count; i++) {
+          const x = (i / (count - 1)) * w;
+          const val = state.samples[i][key] || 0;
+          const y = centerY - val * scaleY;
+          if (i === 0) oscCtx.moveTo(x, y);
+          else oscCtx.lineTo(x, y);
+        }
+        oscCtx.stroke();
+      };
+
+      renderLine('x', 'rgba(239, 68, 68, 0.6)', 1);
+      renderLine('y', 'rgba(16, 185, 129, 0.6)', 1);
+      renderLine('z', 'rgba(59, 130, 246, 0.6)', 1);
+      renderLine('filteredMagnitude', '#06b6d4', 2.2); // Dynamic Magnitude (Cyan)
+    }
+
+    // ==========================================
+    // 5. Spectral (FFT) Canvas Renderer
+    // ==========================================
+    const specCanvas = document.getElementById('specCanvas');
+    const specCtx = specCanvas.getContext('2d');
+
+    function renderSpectral() {
+      const w = specCanvas.width;
+      const h = specCanvas.height;
+      specCtx.clearRect(0, 0, w, h);
+
+      // Grid
+      specCtx.strokeStyle = '#1e293b';
+      specCtx.lineWidth = 1;
+      for (let i = 1; i < 5; i++) {
+        const y = (h / 5) * i;
+        specCtx.beginPath();
+        specCtx.moveTo(0, y);
+        specCtx.lineTo(w, y);
+        specCtx.stroke();
+      }
+
+      const numBars = 32;
+      const barWidth = (w / numBars) - 2;
+      const dominantFreq = state.currentFreq || 15.0;
+
+      for (let i = 0; i < numBars; i++) {
+        const freq = (i / numBars) * 50; // 0 to 50 Hz
+        let amp = 0.05 + Math.random() * 0.08;
+
+        // Primary peak
+        const diff = Math.abs(freq - dominantFreq);
+        if (diff < 2.5) {
+          amp += (1.0 - diff / 2.5) * (state.currentRms || 1.0) * 0.45;
+        }
+        // 2X Harmonic peak
+        const diff2 = Math.abs(freq - dominantFreq * 2);
+        if (diff2 < 2.5) {
+          amp += (1.0 - diff2 / 2.5) * (state.currentRms || 1.0) * 0.18;
+        }
+
+        const barHeight = Math.min(h - 20, amp * (h / 4));
+        const x = i * (barWidth + 2);
+        const y = h - barHeight - 15;
+
+        // Color coding
+        let barColor = '#0891b2';
+        if (barHeight > h * 0.6) barColor = '#ef4444';
+        else if (barHeight > h * 0.35) barColor = '#f59e0b';
+
+        specCtx.fillStyle = barColor;
+        specCtx.fillRect(x, y, barWidth, barHeight);
+
+        // Freq label at intervals
+        if (i % 8 === 0) {
+          specCtx.fillStyle = '#64748b';
+          specCtx.font = '10px monospace';
+          specCtx.fillText(Math.round(freq) + 'Hz', x, h - 2);
+        }
+      }
+    }
+
+    // ==========================================
+    // 6. Physics / Simulation Engine (Runs ~60Hz)
+    // ==========================================
+    function simulationTick() {
+      state.phase += 0.1;
+      const t = state.phase;
+
+      let dx = (Math.random() - 0.5) * 0.25;
+      let dy = (Math.random() - 0.5) * 0.25;
+      let dz = (Math.random() - 0.5) * 0.25;
+      let freq = 12.0;
+
+      switch (state.scenario) {
+        case 'NORMAL_STABLE':
+          freq = 12.0;
+          break;
+        case 'MOTOR_IMBALANCE':
+          freq = 30.0; // 1800 RPM
+          dx += Math.sin(t * 3.0) * 4.2;
+          dy += Math.cos(t * 3.0) * 4.0;
+          dz += Math.sin(t * 6.0) * 1.5;
+          break;
+        case 'BEARING_FAULT':
+          freq = 42.0;
+          dx += (Math.random() - 0.5) * 1.8;
+          dy += (Math.random() - 0.5) * 1.8;
+          // Periodic sharp impacts (BPFO)
+          if (Math.sin(t * 4.2) > 0.92) {
+            dx += (Math.random() > 0.5 ? 1 : -1) * 7.5;
+            dy += (Math.random() > 0.5 ? 1 : -1) * 7.2;
+            dz += 6.8;
+          }
+          break;
+        case 'SEISMIC_TREMOR':
+          freq = 3.5;
+          dx += Math.sin(t * 0.35) * 3.8;
+          dy += Math.cos(t * 0.35) * 3.5;
+          dz += Math.sin(t * 0.7) * 2.2;
+          break;
+        case 'CAVITATION':
+          freq = 48.0;
+          dx += (Math.random() - 0.5) * 6.5;
+          dy += (Math.random() - 0.5) * 6.5;
+          dz += (Math.random() - 0.5) * 5.0;
+          break;
+        case 'RESONANCE_SWEEP':
+          const swFreq = 10 + (Math.sin(t * 0.2) + 1) * 20;
+          freq = swFreq;
+          const resonance = Math.abs(swFreq - 25) < 3 ? 3.5 : 1.0;
+          dx += Math.sin(t * (swFreq / 10)) * 2.5 * resonance;
+          dy += Math.cos(t * (swFreq / 10)) * 2.5 * resonance;
+          break;
+      }
+
+      // Shock spike injection
+      if (state.spikeMagnitude > 0) {
+        dx += state.spikeMagnitude;
+        dy += state.spikeMagnitude * 0.8;
+        dz += state.spikeMagnitude * 0.9;
+        state.spikeMagnitude *= 0.65; // decay rapidly
+        if (state.spikeMagnitude < 0.2) state.spikeMagnitude = 0;
+      }
+
+      // Compute magnitude
+      const dynamicMag = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      const sample = {
+        timestamp: Date.now(),
+        x: dx,
+        y: dy,
+        z: dz,
+        filteredMagnitude: dynamicMag,
+        frequency: freq
+      };
+
+      state.samples.push(sample);
+      if (state.samples.length > 120) state.samples.shift();
+
+      // Recent RMS & Kurtosis
+      const recentMags = state.samples.map(s => s.filteredMagnitude);
+      let sumSq = 0;
+      for (let m of recentMags) sumSq += m * m;
+      const rms = Math.sqrt(sumSq / recentMags.length);
+      const kurtosis = calculateKurtosis(recentMags);
+      const peak = Math.max(...recentMags);
+
+      state.currentRms = rms;
+      state.currentFreq = freq;
+
+      // Anomaly Check
+      checkAnomaly(peak, rms, freq, kurtosis);
+
+      // Update UI elements
+      document.getElementById('valRms').innerHTML = rms.toFixed(2) + ' <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">m/s²</span>';
+      document.getElementById('valPeak').innerHTML = peak.toFixed(2) + ' <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">m/s²</span>';
+      document.getElementById('valPkPk').innerText = (peak * 1.9).toFixed(2);
+      document.getElementById('valFreq').innerHTML = freq.toFixed(1) + ' <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">Hz</span>';
+      document.getElementById('valRpm').innerText = Math.round(freq * 60);
+      document.getElementById('valKurtosis').innerText = kurtosis.toFixed(2);
+
+      // ISO badge
+      const iso = evaluateIso(rms);
+      const isoBadge = document.getElementById('badgeIsoClass');
+      isoBadge.className = 'badge ' + iso.color;
+      isoBadge.innerText = iso.text;
+      document.getElementById('descIso').innerText = iso.desc;
+
+      // Probe HUD elements if in mobile probe mode
+      document.getElementById('probeMagText').innerText = rms.toFixed(2);
+      document.getElementById('probeAxisX').innerText = dx.toFixed(2);
+      document.getElementById('probeAxisY').innerText = dy.toFixed(2);
+      document.getElementById('probeAxisZ').innerText = dz.toFixed(2);
+
+      const probeGauge = document.getElementById('probeGauge');
+      probeGauge.classList.remove('warning', 'critical');
+      if (rms >= state.thresholds.rmsCrit) probeGauge.classList.add('critical');
+      else if (rms >= state.thresholds.rmsWarn) probeGauge.classList.add('warning');
+
+      // Redraw Canvases
+      renderOscilloscope();
+      renderSpectral();
+    }
+
+    let simInterval = setInterval(simulationTick, 1000 / 60);
+
+    // ==========================================
+    // 7. Anomaly Handling & Logging
+    // ==========================================
+    let lastAlertTime = 0;
+    function checkAnomaly(peak, rms, freq, kurtosis) {
+      const now = Date.now();
+      if (now - lastAlertTime < 2500) return; // cooldown
+
+      let isCritical = (rms >= state.thresholds.rmsCrit) || (peak >= state.thresholds.peakCrit);
+      let isWarning = (rms >= state.thresholds.rmsWarn) || (kurtosis >= state.thresholds.kurtosisCrit);
+
+      if (isCritical || isWarning) {
+        lastAlertTime = now;
+        const severity = isCritical ? 'CRITICAL' : 'WARNING';
+        let type = 'SPIKE';
+        let desc = '진동 한계치 초과 발생';
+
+        if (kurtosis >= state.thresholds.kurtosisCrit) {
+          type = 'IMPACT_SHOCK';
+          desc = '첨도(Kurtosis) 급증 충격 펄스 검출';
+        } else if (rms >= state.thresholds.rmsCrit) {
+          type = 'SUSTAINED_HIGH_RMS';
+          desc = '연속 고진폭 RMS 위험치 도달';
+        } else if (state.scenario === 'MOTOR_IMBALANCE') {
+          type = 'HARMONIC_RESONANCE';
+          desc = '1X 회전 주파수 언밸런스 동조 진동';
+        }
+
+        const anomaly = {
+          id: 'anom-' + now,
+          time: new Date().toLocaleTimeString(),
+          severity,
+          type,
+          peak,
+          rms,
+          freq,
+          desc
+        };
+
+        state.anomalies.unshift(anomaly);
+        if (state.anomalies.length > 50) state.anomalies.pop();
+
+        triggerAlarmBanner(anomaly);
+
+        if (severity === 'CRITICAL') {
+          soundEngine.playCritical();
+          soundEngine.triggerHaptic('CRITICAL');
+        } else {
+          soundEngine.playWarning();
+          soundEngine.triggerHaptic('WARNING');
+        }
+
+        updateAnomalyTable();
+      }
+    }
+
+    function triggerAlarmBanner(anomaly) {
+      state.activeAnomaly = anomaly;
+      const banner = document.getElementById('alarmBanner');
+      banner.style.display = 'flex';
+      document.getElementById('alarmBannerTitle').innerText = `[${anomaly.severity}] ${anomaly.desc}`;
+      document.getElementById('alarmBannerDesc').innerText = `최대 ${anomaly.peak.toFixed(2)} m/s² | RMS ${anomaly.rms.toFixed(2)} m/s² | 주파수 ${anomaly.freq.toFixed(1)} Hz`;
+    }
+
+    function dismissAlarm() {
+      document.getElementById('alarmBanner').style.display = 'none';
+      state.activeAnomaly = null;
+    }
+
+    function updateAnomalyTable() {
+      const tbody = document.getElementById('anomalyTableBody');
+      if (state.anomalies.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">현재 감지된 진동 이상 징후가 없습니다. 정상 운전 중입니다.</td></tr>`;
+        return;
+      }
+
+      let html = '';
+      for (let a of state.anomalies) {
+        const badgeClass = a.severity === 'CRITICAL' ? 'badge-rose' : 'badge-amber';
+        html += `
+          <tr>
+            <td class="mono">${a.time}</td>
+            <td><span class="badge ${badgeClass}">${a.severity}</span></td>
+            <td style="font-weight: 500;">${a.type}</td>
+            <td class="mono">${a.peak.toFixed(2)} m/s²</td>
+            <td class="mono">${a.rms.toFixed(2)} m/s²</td>
+            <td class="mono">${a.freq.toFixed(1)} Hz</td>
+            <td>
+              <button class="btn btn-secondary btn-sm" onclick="openAiDiagnosisWithItem('${a.id}')" style="padding: 3px 8px; font-size: 0.725rem;">
+                AI 진단
+              </button>
+            </td>
+          </tr>
+        `;
+      }
+      tbody.innerHTML = html;
+    }
+
+    function clearAnomalyLogs() {
+      state.anomalies = [];
+      updateAnomalyTable();
+      dismissAlarm();
+    }
+
+    function exportLogsCsv() {
+      if (state.anomalies.length === 0) {
+        alert('내보낼 이상 징후 로그가 없습니다.');
+        return;
+      }
+      let csv = '시각,위험등급,이상유형,최대가속도(m/s2),RMS진동(m/s2),주파수(Hz),설명\n';
+      for (let a of state.anomalies) {
+        csv += `"${a.time}","${a.severity}","${a.type}",${a.peak.toFixed(2)},${a.rms.toFixed(2)},${a.freq.toFixed(1)},"${a.desc}"\n`;
+      }
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Galaxy_S24_Vibration_Logs_${Date.now()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ==========================================
+    // 8. User Actions (Mute, Spike, Scenarios)
+    // ==========================================
+    function toggleMute() {
+      soundEngine.init();
+      state.isMuted = !state.isMuted;
+      document.getElementById('muteText').innerText = state.isMuted ? '음소거 됨' : '알람 사운드 켜짐';
+      document.getElementById('btnToggleMute').style.borderColor = state.isMuted ? '#f43f5e' : '#334155';
+    }
+
+    function injectSpikeShock() {
+      soundEngine.init();
+      state.spikeMagnitude = 28.5; // High 28.5 m/s² shock
+    }
+
+    function changeScenario(val) {
+      state.scenario = val;
+    }
+
+    function toggleSensorProbeMode() {
+      const dash = document.getElementById('dashboardView');
+      const probe = document.getElementById('sensorNodeView');
+      const btn = document.getElementById('btnToggleSensorView');
+
+      if (dash.style.display !== 'none') {
+        dash.style.display = 'none';
+        probe.style.display = 'flex';
+        btn.querySelector('span').innerText = '대시보드 보기';
+      } else {
+        dash.style.display = 'flex';
+        probe.style.display = 'none';
+        btn.querySelector('span').innerText = '스마트폰 센서 모드';
+        resizeCanvas();
+      }
+    }
+
+    // Real Hardware Motion Sensor Stream
+    function startRealSensorStream() {
+      soundEngine.init();
+      if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+        DeviceMotionEvent.requestPermission().then(response => {
+          if (response === 'granted') attachMotionListener();
+          else alert('모션 센서 접근 권한이 거부되었습니다.');
+        }).catch(err => {
+          attachMotionListener();
+        });
+      } else {
+        attachMotionListener();
+      }
+    }
+
+    function attachMotionListener() {
+      window.addEventListener('devicemotion', handleDeviceMotion);
+      state.isRealSensorStreaming = true;
+      document.getElementById('btnStartSensor').style.display = 'none';
+      document.getElementById('btnStopSensor').style.display = 'inline-flex';
+      // Disable pure random simulation when real hardware is feeding
+      clearInterval(simInterval);
+      simInterval = setInterval(simulationTick, 1000 / 60);
+    }
+
+    function stopRealSensorStream() {
+      window.removeEventListener('devicemotion', handleDeviceMotion);
+      state.isRealSensorStreaming = false;
+      document.getElementById('btnStartSensor').style.display = 'inline-flex';
+      document.getElementById('btnStopSensor').style.display = 'none';
+    }
+
+    function handleDeviceMotion(event) {
+      const acc = event.acceleration || event.accelerationIncludingGravity;
+      if (!acc || acc.x === null) return;
+
+      const rawX = acc.x || 0;
+      const rawY = acc.y || 0;
+      const rawZ = acc.z || 0;
+
+      const { dx, dy, dz, mag } = extractor.process(rawX, rawY, rawZ);
+
+      // Push real sample
+      const sample = {
+        timestamp: Date.now(),
+        x: dx,
+        y: dy,
+        z: dz,
+        filteredMagnitude: mag,
+        frequency: 18.0
+      };
+      state.samples.push(sample);
+      if (state.samples.length > 120) state.samples.shift();
+    }
+
+    // ==========================================
+    // 9. AI Diagnosis System (Self-Contained Rule & AI Engine)
+    // ==========================================
+    function openAiDiagnosisModal() {
+      runAiDiagnosis();
+      document.getElementById('aiModal').style.display = 'flex';
+    }
+
+    function openAiDiagnosisWithItem(id) {
+      const item = state.anomalies.find(a => a.id === id);
+      if (item) state.activeAnomaly = item;
+      openAiDiagnosisModal();
+    }
+
+    function closeAiModal() {
+      document.getElementById('aiModal').style.display = 'none';
+    }
+
+    function runAiDiagnosis() {
+      const curRms = state.currentRms || 0.25;
+      const curFreq = state.currentFreq || 15.0;
+      const scenario = state.scenario;
+
+      let faultType = "정상 상태 및 허용 잔류 진동";
+      let isoRating = "Zone A (Class I 정상)";
+      let badgeClass = "badge-emerald";
+      let summary = "측정된 가속도 실효치 및 주파수가 안전 기준치 이내로 설비가 원활하게 가동되고 있습니다.";
+      let technical = "기저 노이즈 플로어는 약 0.15 m/s² 수준이며, 고조파 왜곡이나 국부 충격 징후가 전혀 관찰되지 않습니다.";
+      let recs = [
+        "현재 운전 조건을 유지하며 일상 주기 점검을 지속하십시오.",
+        "베어링 급유 주기에 맞춰 정상 오일 점도를 유지하십시오.",
+        "기준 베이스라인(Baseline) 데이터를 정기 저장하십시오."
+      ];
+
+      if (curRms >= 5.5 || scenario === 'BEARING_FAULT') {
+        faultType = "베어링 외륜/전동체 결함 충격 (Bearing BPFO Impulses)";
+        isoRating = "Zone D (Class IV 위험)";
+        badgeClass = "badge-rose";
+        summary = "진동 첨도(Kurtosis) 수치가 급증하였으며 주기적인 고주파 충격 펄스(Impulse Spike)가 지속 관측됩니다.";
+        technical = "베어링 궤도면 박리 또는 전동체 표면 결함으로 인해 금속 접촉 충격이 하우징으로 직접 전달되고 있습니다.";
+        recs = [
+          "설비 가동을 즉시 정지하고 베어링 하우징의 발열 상태를 점검하십시오.",
+          "청진기 또는 충격 펄스 측정기를 활용하여 내부 손상 위치를 확정하십시오.",
+          "예비 베어링으로 신속 교체하고 축 정렬 오차를 재측정하십시오."
+        ];
+      } else if (scenario === 'MOTOR_IMBALANCE' || (curRms >= 2.8 && curFreq > 20)) {
+        faultType = "회전체 불평형 및 편심 하중 (Motor Dynamic Imbalance)";
+        isoRating = "Zone C (Class III 주의)";
+        badgeClass = "badge-amber";
+        summary = `1X 회전 주파수(${curFreq.toFixed(1)} Hz) 대역에서 정현파형의 강한 회전 불평형 진동이 발생하고 있습니다.`;
+        technical = "질량 중심 편차로 인해 회전 속도 자승에 비례하는 동적 원심력이 발생하여 베이스 프레임으로 전달되고 있습니다.";
+        recs = [
+          "임펠러 또는 로터에 이물질이 고착되었는지 육안 점검 및 세척을 수행하십시오.",
+          "다이나믹 밸런싱(Field Balancing) 교정을 수행하여 보정 웨이트를 장착하십시오.",
+          "구동부 커플링의 편각 및 편심 정렬 상태를 레이저 얼라인먼트로 재정렬하십시오."
+        ];
+      } else if (scenario === 'CAVITATION') {
+        faultType = "유체 캐비테이션 및 배관 난류 (Cavitation & Turbulence)";
+        isoRating = "Zone C (Class III 주의)";
+        badgeClass = "badge-amber";
+        summary = "광대역 고주파 불규칙 충격 진동이 발생하고 있어 펌프 내부 기포 파열이 의심됩니다.";
+        technical = "흡입측 압력 강하로 인한 수격 및 국부 공동화 현상으로 임펠러 침식 위험이 매우 높습니다.";
+        recs = [
+          "흡입 배관 밸브 개도율 및 흡입 필터(Strainer)의 막힘 여부를 점검하십시오.",
+          "펌프 NPSH(유효흡입양정) 마진이 적정한지 흡입구 수위를 확인하십시오."
+        ];
+      }
+
+      document.getElementById('aiFaultType').innerText = faultType;
+      const badge = document.getElementById('aiIsoRating');
+      badge.className = 'badge ' + badgeClass;
+      badge.innerText = isoRating;
+      document.getElementById('aiSummary').innerText = summary;
+      document.getElementById('aiDetails').innerText = technical;
+
+      let recsHtml = '';
+      for (let r of recs) recsHtml += `<li>${r}</li>`;
+      document.getElementById('aiRecs').innerHTML = recsHtml;
+    }
+
+    // ==========================================
+    // 10. Settings Modal
+    // ==========================================
+    function openSettingsModal() {
+      document.getElementById('cfgRmsWarn').value = state.thresholds.rmsWarn;
+      document.getElementById('cfgRmsCrit').value = state.thresholds.rmsCrit;
+      document.getElementById('cfgPeakCrit').value = state.thresholds.peakCrit;
+      document.getElementById('cfgKurtosis').value = state.thresholds.kurtosisCrit;
+      document.getElementById('cfgSound').checked = state.thresholds.soundEnabled;
+      document.getElementById('settingsModal').style.display = 'flex';
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').style.display = 'none';
+    }
+
+    function saveSettings() {
+      state.thresholds.rmsWarn = parseFloat(document.getElementById('cfgRmsWarn').value) || 2.8;
+      state.thresholds.rmsCrit = parseFloat(document.getElementById('cfgRmsCrit').value) || 5.5;
+      state.thresholds.peakCrit = parseFloat(document.getElementById('cfgPeakCrit').value) || 14.0;
+      state.thresholds.kurtosisCrit = parseFloat(document.getElementById('cfgKurtosis').value) || 4.5;
+      state.thresholds.soundEnabled = document.getElementById('cfgSound').checked;
+      document.getElementById('subRms').innerText = `경고 기준: ${state.thresholds.rmsWarn.toFixed(2)} m/s² | 위험: ${state.thresholds.rmsCrit.toFixed(2)} m/s²`;
+      closeSettingsModal();
+    }
+
+    // ==========================================
+    // 11. Self-Download Entire Single HTML
+    // ==========================================
+    function downloadCurrentHtml() {
+      const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'galaxy_s24_ultra_vibration_monitor.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
